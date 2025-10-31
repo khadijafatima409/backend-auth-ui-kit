@@ -10,3 +10,10 @@ export const createAuthValidator = vine.compile(
     confirm_password: vine.string(),
   })
 )
+
+export const loginAuthValidator = vine.compile(
+  vine.object({
+    email: vine.string(),
+    password: vine.string(),
+  })
+)

@@ -1,7 +1,8 @@
-import type { HttpContext } from '@adonisjs/core/http'
-import { createAuthValidator } from '../validator/user.js'
+import { HttpContext } from '@adonisjs/core/http'
+import { createAuthValidator, loginAuthValidator } from '../validator/user.js'
 
 import User from '#models/user'
+import hash from '@adonisjs/core/services/hash'
 
 export default class UserController {
   async index({}: HttpContext) {
@@ -27,6 +28,20 @@ export default class UserController {
       password: payload.password,
     })
     return response.ok({ message: 'User Register Sucesfully', data: user })
+  }
+  async login({ request, response }: HttpContext) {
+    const payload = await request.validateUsing(loginAuthValidator)
+    const existingUser = await User.findBy('email', payload.email)
+
+    if (!existingUser) {
+      return response.ok({ message: 'User not found' })
+    }
+    const isPasswordValid = await hash.verify(existingUser.password, payload.password)
+    if (!isPasswordValid) {
+      return response.abort('Invalid credentials')
+    }
+    const token = await User.accessTokens.create(existingUser)
+    return response.ok({ message: 'User Login Succesfully', data: token })
   }
 
   async show({}: HttpContext) {
